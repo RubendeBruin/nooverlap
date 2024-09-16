@@ -23,9 +23,9 @@ for n in range(100):
 
     from time import time
     start = time()
-    no.push_free(0.3)
+    no.push_free(0,(n+1)/1000)
     elapsed = time() - start
-    print(f'number {n} took {elapsed*1000} ms')
+    print(f'number {n/1000} took {elapsed*1000} ms')
 
 # draw the boxes 
 fig, ax = plt.subplots()

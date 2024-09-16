@@ -32,6 +32,14 @@ impl Box {
         Box { x,y,x0,y0,d_left, d_right, d_top, d_bottom }
     }
 
+    fn width(&self) -> f32 {
+        self.d_left + self.d_right
+    }
+
+    fn height(&self) -> f32 {
+        self.d_top + self.d_bottom
+    }
+
     fn left(&self) -> f32 {
         self.x - self.d_left
     }
@@ -133,6 +141,7 @@ impl Box {
 #[pyclass]
 struct Pusher {
     boxes : Vec<Box>,
+    
 }
 
 #[pymethods]
@@ -140,7 +149,7 @@ impl Pusher {
 
     #[new]
     fn new() -> Self {
-        Pusher { boxes: Vec::new() }
+        Pusher { boxes: Vec::new()}
     }
 
     /// Add a box to the pusher,
@@ -156,7 +165,7 @@ impl Pusher {
     /// Push the boxes so that they don't overlap
     /// returns true if the boxes were pushed
     /// returns false if the boxes don't overlap
-    fn push_elements(&mut self, push_factor : f32) -> bool{
+    fn push_elements(&mut self, push_factor_horizontal:f32, push_factor_vertical:f32) -> bool{
         let mut push = false;
         for i in 0..self.boxes.len() {
             
@@ -166,15 +175,27 @@ impl Pusher {
                 }
                 if self.boxes[i].overlap(&self.boxes[j]) {
 
-                    let (dx, dy) = self.boxes[i].line_to_center(&self.boxes[j]);
+                    let (mut dx, mut dy) = self.boxes[i].line_to_center(&self.boxes[j]);
                     
                     let overlap = self.boxes[i].get_overlapping_distance(&self.boxes[j]);
-                    let overlap = overlap * push_factor;
-                    // let overlap = overlap.max(0.0);
-                    // let overlap = overlap.min(0.1);
-                    let dx = dx * overlap;
-                    let dy = dy * overlap;
+                    
+                    dx = dx * overlap;
+                    dy = dy * overlap;
 
+                    // maximize the move distance to the push factor 
+                    // times the size of the box
+
+                    if dx.abs() > push_factor_horizontal * self.boxes[i].width()
+                    {
+                        dx = dx.signum() * push_factor_horizontal * self.boxes[i].width();
+                    }
+
+                    if dy.abs() > push_factor_vertical * self.boxes[i].height()
+                    {
+                        dy = dy.signum() * push_factor_vertical * self.boxes[i].height();
+                    }
+
+                    
                     self.boxes[i].x += dx;
                     self.boxes[i].y += dy;
                     self.boxes[j].x -= dx;
@@ -206,16 +227,23 @@ impl Pusher {
         (self.boxes[index].x, self.boxes[index].y)
     }
 
-    fn push_free(&mut self, push_factor : f32)
+    fn push_free(&mut self, push_factor_horizontal : f32, push_factor_vertical : f32)
+        
     {
+        if push_factor_horizontal <= 0.0 && push_factor_vertical <= 0.0
+        {
+            panic!("At least one of the push factors should be larger than 0.0");
+        }
+
         loop {
-            let pushed = self.push_elements(push_factor);
+            let pushed = self.push_elements(push_factor_horizontal, push_factor_vertical);
             if !pushed
             {
                 break;
             }
         }
     }
+   
 }
 
 /// A Python module implemented in Rust.

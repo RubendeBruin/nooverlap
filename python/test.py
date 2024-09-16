@@ -20,7 +20,8 @@ def make_data(fac):
     # add the boxes
     for i in range(n):
         no.add_box(x[i], y[i], w[i]/2, w[i]/2, h[i]/2, h[i]/2)
-    no.push_free(fac)
+
+    no.push_free(fac, fac)
 
     return no
 

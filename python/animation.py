@@ -25,7 +25,7 @@ fig, ax = plt.subplots()
 def step(i):
 
 
-    no.push_elements(0.1)
+    no.push_elements(0.01, 0.1)
    
     ax.clear()   
     ax.set_xlim(-1,6)
