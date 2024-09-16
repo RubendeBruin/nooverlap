@@ -154,7 +154,7 @@ impl Pusher {
 
     /// Add a box to the pusher,
     /// returns the index of the newly added box
-    
+    /// x,y, d_left, d_right, d_top, d_bottom are the position and size of the box
     fn add_box(&mut self, x0: f32, y0: f32, d_left: f32, d_right: f32, d_top: f32, d_bottom: f32) -> usize {
         let new_box = Box::new(x0, y0, d_left, d_right, d_top, d_bottom);
         self.boxes.push(new_box);
@@ -177,7 +177,21 @@ impl Pusher {
 
                     let (mut dx, mut dy) = self.boxes[i].line_to_center(&self.boxes[j]);
                     
+                    // normalize dx,dy
+                    let distance = (dx*dx + dy*dy).sqrt();
+                    if distance == 0.0
+                    {
+                        dx = 0.0;
+                        dy = 1.0;
+                    }
+                    else
+                    {
+                        dx = dx / distance;
+                        dy = dy / distance;
+                    }
+
                     let overlap = self.boxes[i].get_overlapping_distance(&self.boxes[j]);
+
                     
                     dx = dx * overlap;
                     dy = dy * overlap;
@@ -235,7 +249,8 @@ impl Pusher {
             panic!("At least one of the push factors should be larger than 0.0");
         }
 
-        loop {
+        loop
+         {
             let pushed = self.push_elements(push_factor_horizontal, push_factor_vertical);
             if !pushed
             {
