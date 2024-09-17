@@ -10,7 +10,7 @@ use pyo3::prelude::*;
 ///       ----- bottom -----
 /// y-
 
-#[pyclass]
+//#[pyclass]
 struct Box {
     x0 : f32,
     y0 : f32,
@@ -22,10 +22,10 @@ struct Box {
     d_bottom: f32,
 }
 
-#[pymethods]
+//#[pymethods]
 impl Box {
 
-    #[new]
+    //#[new]
     fn new(x0: f32, y0: f32, d_left: f32, d_right: f32, d_top: f32, d_bottom: f32) -> Self {
         let x = x0;
         let y = y0;
@@ -131,10 +131,10 @@ impl Box {
         return (dx, dy)
     }
 
-    fn distance_to_center(&self, other: &Box) -> f32 {
-        let (dx, dy) = self.line_to_center(other);
-        return (dx*dx + dy*dy).sqrt();
-    }
+    // fn distance_to_center(&self, other: &Box) -> f32 {
+    //     let (dx, dy) = self.line_to_center(other);
+    //     return (dx*dx + dy*dy).sqrt();
+    // }
     
 }
 
@@ -175,46 +175,58 @@ impl Pusher {
                 }
                 if self.boxes[i].overlap(&self.boxes[j]) {
 
+                    let overlap = self.boxes[i].get_overlapping_distance(&self.boxes[j]);
+
+                    // get the average width and height of the boxes
+                    let width = (self.boxes[i].width() + self.boxes[j].width()) / 2.0;
+                    let height = (self.boxes[i].height() + self.boxes[j].height()) / 2.0;
+
+                    if width < 1e-9 || height < 1e-9  // zero size boxes can not overlap
+                    {
+                        continue;
+                    }
+
+                    // push the boxes apart by the overlap
+                    // but maximized by the push factor times the size of the box
+                    let maxx = width * push_factor_horizontal;
+                    let maxy = height * push_factor_vertical;
                     let (mut dx, mut dy) = self.boxes[i].line_to_center(&self.boxes[j]);
                     
                     // normalize dx,dy
                     let distance = (dx*dx + dy*dy).sqrt();
                     if distance == 0.0
                     {
-                        dx = 0.0;
-                        dy = 1.0;
+                        dx = overlap;
+                        dy = overlap;
                     }
                     else
                     {
-                        dx = dx / distance;
-                        dy = dy / distance;
+                        dx = dx * overlap / distance;
+                        dy = dy * overlap / distance;
                     }
-
-                    let overlap = self.boxes[i].get_overlapping_distance(&self.boxes[j]);
-
-                    
-                    dx = dx * overlap;
-                    dy = dy * overlap;
 
                     // maximize the move distance to the push factor 
                     // times the size of the box
 
-                    if dx.abs() > push_factor_horizontal * self.boxes[i].width()
+                    if dx.abs() > maxx
                     {
-                        dx = dx.signum() * push_factor_horizontal * self.boxes[i].width();
+                        dx = dx.signum() * maxx;
                     }
 
-                    if dy.abs() > push_factor_vertical * self.boxes[i].height()
+                    if dy.abs() > maxy
                     {
-                        dy = dy.signum() * push_factor_vertical * self.boxes[i].height();
+                        dy = dy.signum() * maxy;
                     }
 
-                    
+                    // and apply on the fist box only
                     self.boxes[i].x += dx;
                     self.boxes[i].y += dy;
+
                     self.boxes[j].x -= dx;
                     self.boxes[j].y -= dy;
                     
+                    // println!("Overlap: {}, {} {} {} {}, w={} h={} distance = {}", overlap, i, j, dx, dy, self.boxes[i].width(), self.boxes[i].height(), distance);
+
                     push = true
                 }
             }
@@ -223,7 +235,7 @@ impl Pusher {
     }
 
     /// Pull all elements towards their original position
-    /// if they so not overlap it
+    /// if they do not overlap it
     fn pull_elements(&mut self, distance : f32)
     {
         // loop over all boxes
@@ -235,12 +247,20 @@ impl Pusher {
 
     }
 
-    /// Get the position of the box
+    /// Get the position of the box at index i
     /// returns the position of the box
     fn get_position(&self, index: usize) -> (f32, f32) {
         (self.boxes[index].x, self.boxes[index].y)
     }
 
+    /// Get the original position of the box at index i
+    /// returns the original position of the box
+    fn get_position0(&self, index: usize) -> (f32, f32) {
+        (self.boxes[index].x0, self.boxes[index].y0)
+    }
+
+    /// Pushs the boxes so that they don't overlap
+    #[pyo3(signature = (push_factor_horizontal=0.3, push_factor_vertical=0.3))]
     fn push_free(&mut self, push_factor_horizontal : f32, push_factor_vertical : f32)
         
     {
@@ -264,7 +284,7 @@ impl Pusher {
 /// A Python module implemented in Rust.
 #[pymodule]
 fn nooverlap(m: &Bound<'_, PyModule>) -> PyResult<()> {
-    m.add_class::<Box>()?;
+    //m.add_class::<Box>()?;
     m.add_class::<Pusher>()?;
     Ok(())
 }
