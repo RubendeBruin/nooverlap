@@ -1,12 +1,40 @@
 Library to avoid overlap of graphical objects.
 
+TLDR;
+```python
+from nooverlap import push_text_free
+push_text_free(fig, ax)
+```
+
+
+
 ![image](https://github.com/user-attachments/assets/d5d20aab-9604-4c2d-a2f1-8004ecfd6f0f)
+
+And fast enough to run in real-time:
+
+https://github.com/user-attachments/assets/b0fc651f-8964-4481-a8b3-dd749a5bd3fe
 
 Steps:
 - define "Pusher"
 - add boxes
 - push
 - get new box positions
+
+Algorithm:
+
+- loop over all boxes combinations (n^2)
+- if boxes overlap: push then away from eachother by the overlapping distance in the direction of overlap
+- but maximize the horizontal and vertical push distances to the user-provided factor times the average widht or height
+- repeat until there is no overlap anymore.
+
+User setttings:
+- maximum push distance in vertical direction per iteration as fraction of the box size
+- maximum push distance in horizontal direction per iteration as fraction of the box size
+Set one of the two to zero to get only horizontal or vertical shift.
+  
+
+
+
 
 Example use for matplotlib:
 
@@ -44,4 +72,6 @@ push_text_free(fig, ax)
 
 plt.show()
 ```
+
+
 
