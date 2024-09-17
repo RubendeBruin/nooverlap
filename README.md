@@ -1,6 +1,9 @@
 Library to avoid overlap of graphical objects.
 
 TLDR;
+
+`pip install nooverlap`
+
 ```python
 from nooverlap import push_text_free
 push_text_free(fig, ax)
