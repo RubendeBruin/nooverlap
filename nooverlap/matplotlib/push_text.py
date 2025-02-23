@@ -34,7 +34,7 @@ def push_text_free(fig, ax, max_x_shift = 0.3, max_y_shift = 0.3):
         d_top = ext.ymax - position[1]
         d_bottom = position[1] - ext.ymin
 
-        pusher.add_box(x0,y0,d_left,d_right,d_top,d_bottom, True)
+        pusher.add_box(x0,y0,d_left,d_right,d_top,d_bottom)
 
     # push the boxes
     pusher.push_free(max_x_shift, max_y_shift)
