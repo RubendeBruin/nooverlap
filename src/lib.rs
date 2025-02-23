@@ -156,21 +156,9 @@ impl Pusher {
     /// Add a movable box to the pusher,
     /// Helper function, moveable is always true
     /// x,y, d_left, d_right, d_top, d_bottom are the position and size of the box
-    fn add_box(&mut self, x0: f32, y0: f32, d_left: f32, d_right: f32, d_top: f32, d_bottom: f32) -> usize {
-        return self._add_box(x0, y0, d_left, d_right, d_top, d_bottom, true)
-    }
-
-    /// Add a unmoveable box to the pusher,
-    /// Helper function, moveable is always false
-    /// x,y, d_left, d_right, d_top, d_bottom are the position and size of the box
-    fn add_static_box(&mut self, x0: f32, y0: f32, d_left: f32, d_right: f32, d_top: f32, d_bottom: f32) -> usize {
-        return self._add_box(x0, y0, d_left, d_right, d_top, d_bottom, false)
-    }
-
-    /// Add a box to the pusher,
-    /// returns the index of the newly added box
-    /// x,y, d_left, d_right, d_top, d_bottom are the position and size of the box, is_moveable sets box to be moveable or not 
-    fn _add_box(&mut self, x0: f32, y0: f32, d_left: f32, d_right: f32, d_top: f32, d_bottom: f32, is_moveable: bool) -> usize {
+    #[pyo3(signature = (x0, y0, d_left, d_right, d_top, d_bottom, is_moveable=true))]
+    fn add_box(&mut self, x0: f32, y0: f32, d_left: f32, d_right: f32, d_top: f32, d_bottom: f32, is_moveable: Option<bool>) -> usize {
+        let is_moveable = is_moveable.unwrap_or(true);
         let new_box = Box::new(x0, y0, d_left, d_right, d_top, d_bottom, is_moveable);
         self.boxes.push(new_box);
 
