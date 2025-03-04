@@ -176,7 +176,7 @@ impl Pusher {
                 if i == j {
                     continue;
                 }
-                if self.boxes[i].overlap(&self.boxes[j]) {
+                if (self.boxes[i].is_moveable || self.boxes[j].is_moveable) && self.boxes[i].overlap(&self.boxes[j]) {
 
                     let overlap = self.boxes[i].get_overlapping_distance(&self.boxes[j]);
 
