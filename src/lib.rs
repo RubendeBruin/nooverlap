@@ -20,16 +20,17 @@ struct Box {
     d_right: f32,
     d_top: f32,
     d_bottom: f32,
+    is_moveable: bool,
 }
 
 //#[pymethods]
 impl Box {
 
     //#[new]
-    fn new(x0: f32, y0: f32, d_left: f32, d_right: f32, d_top: f32, d_bottom: f32) -> Self {
+    fn new(x0: f32, y0: f32, d_left: f32, d_right: f32, d_top: f32, d_bottom: f32, is_moveable: bool) -> Self {
         let x = x0;
         let y = y0;
-        Box { x,y,x0,y0,d_left, d_right, d_top, d_bottom }
+        Box { x,y,x0,y0,d_left, d_right, d_top, d_bottom , is_moveable}
     }
 
     fn width(&self) -> f32 {
@@ -152,11 +153,13 @@ impl Pusher {
         Pusher { boxes: Vec::new()}
     }
 
-    /// Add a box to the pusher,
-    /// returns the index of the newly added box
+    /// Add a movable box to the pusher,
+    /// Helper function, moveable is always true
     /// x,y, d_left, d_right, d_top, d_bottom are the position and size of the box
-    fn add_box(&mut self, x0: f32, y0: f32, d_left: f32, d_right: f32, d_top: f32, d_bottom: f32) -> usize {
-        let new_box = Box::new(x0, y0, d_left, d_right, d_top, d_bottom);
+    #[pyo3(signature = (x0, y0, d_left, d_right, d_top, d_bottom, is_moveable=true))]
+    fn add_box(&mut self, x0: f32, y0: f32, d_left: f32, d_right: f32, d_top: f32, d_bottom: f32, is_moveable: Option<bool>) -> usize {
+        let is_moveable = is_moveable.unwrap_or(true);
+        let new_box = Box::new(x0, y0, d_left, d_right, d_top, d_bottom, is_moveable);
         self.boxes.push(new_box);
 
         return self.boxes.len() - 1;
@@ -173,7 +176,7 @@ impl Pusher {
                 if i == j {
                     continue;
                 }
-                if self.boxes[i].overlap(&self.boxes[j]) {
+                if (self.boxes[i].is_moveable || self.boxes[j].is_moveable) && self.boxes[i].overlap(&self.boxes[j]) {
 
                     let overlap = self.boxes[i].get_overlapping_distance(&self.boxes[j]);
 
@@ -219,14 +222,18 @@ impl Pusher {
                     }
 
                     // and apply on the fist box only
-                    self.boxes[i].x += dx;
-                    self.boxes[i].y += dy;
-
-                    self.boxes[j].x -= dx;
-                    self.boxes[j].y -= dy;
-                    
+                    if self.boxes[i].is_moveable
+                    {
+                        self.boxes[i].x += dx;
+                        self.boxes[i].y += dy;
+                    }
+                    if self.boxes[j].is_moveable
+                    {
+                        self.boxes[j].x -= dx;
+                        self.boxes[j].y -= dy;
+                    }
                     // println!("Overlap: {}, {} {} {} {}, w={} h={} distance = {}", overlap, i, j, dx, dy, self.boxes[i].width(), self.boxes[i].height(), distance);
-
+                    
                     push = true
                 }
             }
@@ -241,8 +248,12 @@ impl Pusher {
         // loop over all boxes
         
         for b in self.boxes.iter_mut()
-        {
-            b.move_towards_origin(distance);
+        {   
+            if b.is_moveable
+            {
+                b.move_towards_origin(distance);
+            }
+            
         }
 
     }
